@@ -46,6 +46,7 @@
   },
   "scripts": {
     "build": "webpack",
+    "dev": "webpack --watch",
     "prepare": "npm run build",
     "test": "jest"
   },

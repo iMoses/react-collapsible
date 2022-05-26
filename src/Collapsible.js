@@ -9,8 +9,11 @@ class Collapsible extends Component {
 
     this.timeout = undefined;
 
-    this.contentId = `collapsible-content-${Date.now()}`;
-    this.triggerId = props.triggerElementProps.id || `collapsible-trigger-${Date.now()}`;
+    this.contentId =
+      props.contentElementId || `collapsible-content-${Date.now()}`;
+
+    this.triggerId =
+      props.triggerElementProps.id || `collapsible-trigger-${Date.now()}`;
 
     // Defaults the dropdown to be closed
     if (props.open) {
@@ -131,24 +134,25 @@ class Collapsible extends Component {
   };
 
   renderNonClickableTriggerElement() {
-    if (
-      this.props.triggerSibling &&
-      typeof this.props.triggerSibling === 'string'
-    ) {
-      return (
-        <span className={`${this.props.classParentString}__trigger-sibling`}>
-          {this.props.triggerSibling}
-        </span>
-      );
-    } else if (
-      this.props.triggerSibling &&
-      typeof this.props.triggerSibling === 'function'
-    ) {
-      return this.props.triggerSibling();
-    } else if (this.props.triggerSibling) {
-      return <this.props.triggerSibling />;
+    const { triggerSibling, classParentString } = this.props;
+    if (!triggerSibling) return null;
+
+    const triggerSiblingType = typeof triggerSibling;
+
+    switch (triggerSiblingType) {
+      case 'string':
+        return (
+          <span className={`${classParentString}__trigger-sibling`}>
+            {triggerSibling}
+          </span>
+        );
+      case 'function':
+        return triggerSibling();
+      case 'object':
+        return triggerSibling;
+      default:
+        return null;
     }
-    return null;
   }
 
   handleTransitionEnd = (e) => {
@@ -205,11 +209,8 @@ class Collapsible extends Component {
         : this.props.children;
 
     // Construct CSS classes strings
-    const {
-      classParentString,
-      contentOuterClassName,
-      contentInnerClassName,
-    } = this.props;
+    const { classParentString, contentOuterClassName, contentInnerClassName } =
+      this.props;
 
     const triggerClassString = `${classParentString}__trigger ${openClass} ${disabledClass} ${
       this.state.isClosed
@@ -285,6 +286,7 @@ Collapsible.propTypes = {
   open: PropTypes.bool,
   containerElementProps: PropTypes.object,
   triggerElementProps: PropTypes.object,
+  contentElementId: PropTypes.string,
   classParentString: PropTypes.string,
   className: PropTypes.string,
   openedClassName: PropTypes.string,
@@ -315,7 +317,11 @@ Collapsible.propTypes = {
     'unset',
   ]),
   contentHiddenWhenClosed: PropTypes.bool,
-  triggerSibling: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+  triggerSibling: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.element,
+    PropTypes.func,
+  ]),
   tabIndex: PropTypes.number,
   contentContainerTagName: PropTypes.string,
   children: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
@@ -348,7 +354,7 @@ Collapsible.defaultProps = {
   onTriggerClosing: () => {},
   tabIndex: null,
   contentContainerTagName: 'div',
-  triggerElementProps: {}
+  triggerElementProps: {},
 };
 
 export default Collapsible;
