@@ -199,4 +199,48 @@ describe('<Collapsible />', () => {
       expect(wrapper.props().open).toBe(false);
     });
   });
+
+  describe('Trigger Siblings', () => {
+    it('Renders a trigger sibling as a string', () => {
+      const string = 'Hello world';
+      const wrapper = mount(<Collapsible triggerSibling={string} />);
+
+      const elementText = wrapper.find('.Collapsible__trigger-sibling').text();
+
+      expect(elementText).toBe(string);
+    });
+
+    it('Renders a react function', () => {
+      const string = 'Hello world';
+      const ReactFn = () => <div test-id="test-react-fn">{string}</div>;
+      const wrapper = mount(<Collapsible triggerSibling={ReactFn} />);
+
+      const element = wrapper.find('[test-id="test-react-fn"]');
+
+      expect(element.text()).toBe(string);
+    });
+
+    it('Renders a react component', () => {
+      const string = 'Hello world';
+      const ReactFn = () => <div test-id="test-react-fn">{string}</div>;
+      const wrapper = mount(<Collapsible triggerSibling={<ReactFn />} />);
+
+      const element = wrapper.find('[test-id="test-react-fn"]');
+
+      expect(element.text()).toBe(string);
+    });
+
+    it('Renders a function', () => {
+      const string = 'Hello world';
+      const wrapper = mount(
+        <Collapsible
+          triggerSibling={() => <div test-id="test-react-fn">{string}</div>}
+        />
+      );
+
+      const element = wrapper.find('[test-id="test-react-fn"]');
+
+      expect(element.text()).toBe(string);
+    });
+  });
 });
