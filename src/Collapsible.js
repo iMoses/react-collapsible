@@ -9,7 +9,9 @@ class Collapsible extends Component {
 
     this.timeout = undefined;
 
-    this.contentId = `collapsible-content-${Date.now()}`;
+    this.contentId =
+      props.contentElementId || `collapsible-content-${Date.now()}`;
+
     this.triggerId =
       props.triggerElementProps.id || `collapsible-trigger-${Date.now()}`;
 
@@ -284,6 +286,7 @@ Collapsible.propTypes = {
   open: PropTypes.bool,
   containerElementProps: PropTypes.object,
   triggerElementProps: PropTypes.object,
+  contentElementId: PropTypes.string,
   classParentString: PropTypes.string,
   className: PropTypes.string,
   openedClassName: PropTypes.string,
@@ -314,7 +317,11 @@ Collapsible.propTypes = {
     'unset',
   ]),
   contentHiddenWhenClosed: PropTypes.bool,
-  triggerSibling: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+  triggerSibling: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.element,
+    PropTypes.func,
+  ]),
   tabIndex: PropTypes.number,
   contentContainerTagName: PropTypes.string,
   children: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
