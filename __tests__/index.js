@@ -59,7 +59,7 @@ describe('<Collapsible />', () => {
 
   it('given a closed Collapsible it fires the onOpen prop after the transistion', () => {
     const mockOnOpen = jest.fn();
-    const collapsible = shallow(
+    const collapsible = mount(
       <Collapsible open trigger="Hello World" onOpen={mockOnOpen}>
         Some Content
       </Collapsible>
@@ -73,7 +73,7 @@ describe('<Collapsible />', () => {
 
   it('given an open Collapsible it fires the onClose prop after the transistion', () => {
     const mockOnClose = jest.fn();
-    const collapsible = shallow(
+    const collapsible = mount(
       <Collapsible trigger="Hello World" onClose={mockOnClose}>
         Some Content
       </Collapsible>
@@ -167,36 +167,38 @@ describe('<Collapsible />', () => {
 
   describe('Zero Height Collapsibles', () => {
     it('opens correctly even if height is 0', () => {
-      const wrapper = mount(<Collapsible />);
+      const collapsible = mount(<Collapsible />);
+      const outer = collapsible.find('.Collapsible__contentOuter');
 
-      expect(wrapper.state().height).toBe(0);
-      expect(wrapper.state().isClosed).toBe(true);
+      expect(getComputedStyle(outer.getDOMNode()).height).toBe('0px');
+      expect(collapsible.find('.is-closed')).toHaveLength(1);
 
-      wrapper.find('.Collapsible__trigger').simulate('click');
+      collapsible.find('.Collapsible__trigger').simulate('click');
 
-      expect(wrapper.state().isClosed).toBe(false);
+      expect(collapsible.find('.is-open')).toHaveLength(1);
     });
 
-    it('closes correctly even if height is 0', () => {
+    it.only('closes correctly even if height is 0', () => {
       jest.useFakeTimers();
       const mockFn = jest.fn();
-      const wrapper = mount(
+      const collapsible = mount(
         <Collapsible open={true} handleTriggerClick={mockFn} />
       );
+      const outer = collapsible.find('.Collapsible__contentOuter');
 
-      expect(wrapper.state().height).toBe('auto'); // defaults to auto when open
-      expect(wrapper.state().isClosed).toBe(false);
+      expect(getComputedStyle(outer.getDOMNode()).height).toBe('auto'); // defaults to auto when open
+      expect(collapsible.find('.is-open')).toHaveLength(1);
 
-      wrapper.find('.Collapsible__trigger').simulate('click');
+      collapsible.find('.Collapsible__trigger').simulate('click');
 
       expect(mockFn.mock.calls).toHaveLength(1);
 
-      wrapper.setProps({ open: false });
+      collapsible.setProps({ open: false });
 
       jest.runAllTimers();
 
-      expect(wrapper.state().isClosed).toBe(true);
-      expect(wrapper.props().open).toBe(false);
+      expect(collapsible.find('.is-closed')).toHaveLength(1);
+      expect(collapsible.props().open).toBe(false);
     });
   });
 
