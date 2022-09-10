@@ -178,7 +178,7 @@ describe('<Collapsible />', () => {
       expect(collapsible.find('.is-open')).toHaveLength(1);
     });
 
-    it.only('closes correctly even if height is 0', () => {
+    it('closes correctly even if height is 0', () => {
       jest.useFakeTimers();
       const mockFn = jest.fn();
       const collapsible = mount(
