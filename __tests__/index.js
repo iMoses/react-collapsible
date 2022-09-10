@@ -196,6 +196,7 @@ describe('<Collapsible />', () => {
       collapsible.setProps({ open: false });
 
       jest.runAllTimers();
+      collapsible.update();
 
       expect(collapsible.find('.is-closed')).toHaveLength(1);
       expect(collapsible.props().open).toBe(false);
