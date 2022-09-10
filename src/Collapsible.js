@@ -74,13 +74,16 @@ function Collapsible({
       onOpening: useCallback(() => {
         setInTransition(true);
         onOpening?.();
-        onTriggerOpening?.();
-      }, [onOpening, onTriggerOpening]),
+      }, [onOpening]),
       onClosing: useCallback(() => {
         setInTransition(true);
         onClosing?.();
-        onTriggerClosing?.();
-      }, [onClosing, onTriggerClosing]),
+      }, [onClosing]),
+      onToggle: useCallback(
+        (shouldOpen) =>
+          shouldOpen ? onTriggerOpening?.() : onTriggerClosing?.(),
+        [onTriggerOpening, onTriggerClosing]
+      ),
     });
 
   const contentProps = getContentProps();
