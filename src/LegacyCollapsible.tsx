@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useCollapsible } from './use-collapsible';
+import React, { ReactElement, useCallback, useMemo, useState } from 'react';
+import PropTypes, { InferProps, InferType } from 'prop-types';
+import { useCollapsible } from './useCollapsible';
 
-function Collapsible({
+export default function Collapsible({
   open,
   easing,
   onOpen,
@@ -37,7 +37,7 @@ function Collapsible({
   triggerTagName,
   contentContainerTagName,
   children,
-}) {
+}: InferProps<typeof Collapsible.propTypes>) {
   const Trigger = triggerTagName;
   const Container = contentContainerTagName;
 
@@ -46,7 +46,9 @@ function Collapsible({
   const { contentId, triggerId } = useMemo(
     () => ({
       contentId: contentElementId || `collapsible-content-${Date.now()}`,
-      triggerId: triggerElementProps.id || `collapsible-trigger-${Date.now()}`,
+      triggerId:
+        (triggerElementProps as { id?: string })?.id ||
+        `collapsible-trigger-${Date.now()}`,
     }),
     []
   );
@@ -56,7 +58,10 @@ function Collapsible({
       open,
       easing,
       overflow: overflowWhenOpen,
-      duration: [transitionTime, transitionCloseTime ?? transitionTime],
+      duration: [
+        transitionTime ?? 0,
+        transitionCloseTime ?? transitionTime ?? 0,
+      ],
       onOpen: useCallback(
         (event) => {
           setInTransition(false);
@@ -116,10 +121,10 @@ function Collapsible({
         )}
         {...triggerProps}
         style={triggerStyle}
-        onKeyPress={(event) => {
+        onKeyPress={(event: KeyboardEvent) => {
           const { key } = event;
           if (
-            (key === ' ' && triggerTagName.toLowerCase() !== 'button') ||
+            (key === ' ' && triggerTagName?.toLowerCase() !== 'button') ||
             key === 'Enter'
           ) {
             triggerProps.onClick(event);
@@ -146,7 +151,7 @@ function Collapsible({
           contentOuterClassName
         )}
         {...contentProps}
-        hidden={contentHiddenWhenClosed && !isOpen && !inTransition}
+        hidden={Boolean(contentHiddenWhenClosed && !isOpen && !inTransition)}
         role="region"
         aria-labelledby={triggerId}
       >
@@ -166,8 +171,8 @@ function Collapsible({
 Collapsible.propTypes = {
   transitionTime: PropTypes.number,
   transitionCloseTime: PropTypes.number,
-  triggerTagName: PropTypes.string,
-  easing: PropTypes.string,
+  triggerTagName: PropTypes.string.isRequired,
+  easing: PropTypes.string.isRequired,
   open: PropTypes.bool,
   containerElementProps: PropTypes.object,
   triggerElementProps: PropTypes.object,
@@ -200,7 +205,7 @@ Collapsible.propTypes = {
     'inherit',
     'initial',
     'unset',
-  ]),
+  ]).isRequired,
   contentHiddenWhenClosed: PropTypes.bool,
   triggerSibling: PropTypes.oneOfType([
     PropTypes.string,
@@ -208,7 +213,7 @@ Collapsible.propTypes = {
     PropTypes.func,
   ]),
   tabIndex: PropTypes.number,
-  contentContainerTagName: PropTypes.string,
+  contentContainerTagName: PropTypes.string.isRequired,
   children: PropTypes.oneOfType([PropTypes.string, PropTypes.element]),
 };
 
@@ -231,24 +236,19 @@ Collapsible.defaultProps = {
   contentInnerClassName: '',
   className: '',
   triggerSibling: null,
-  onOpen: () => {},
-  onClose: () => {},
-  onOpening: () => {},
-  onClosing: () => {},
-  onTriggerOpening: () => {},
-  onTriggerClosing: () => {},
   tabIndex: null,
   contentContainerTagName: 'div',
   triggerElementProps: {},
 };
 
-export default Collapsible;
-
-function classNames(...classNames) {
+function classNames(...classNames: (string | boolean | null | undefined)[]) {
   return classNames.filter(Boolean).join(' ');
 }
 
-function renderTriggerSibling(triggerSibling, classParentString) {
+function renderTriggerSibling(
+  triggerSibling: InferType<typeof Collapsible.propTypes.triggerSibling>,
+  classParentString: InferType<typeof Collapsible.propTypes.classParentString>
+): ReactElement | null {
   switch (typeof triggerSibling) {
     case 'string':
       return (
