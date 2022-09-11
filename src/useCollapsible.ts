@@ -1,12 +1,15 @@
 import {
-  MutableRefObject,
+  ReactEventHandler,
+  RefObject,
+  SyntheticEvent,
+  TransitionEventHandler,
   useCallback,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 
-export function useCollapsible({
+export function useCollapsible<T extends HTMLElement>({
   open,
   disabled,
   duration = 400,
@@ -18,17 +21,17 @@ export function useCollapsible({
   onClose,
   onClosing,
   onToggle,
-}: UseCollapsibleOptions = {}): UseCollapsibleOutput {
+}: UseCollapsibleOptions<T> = {}): UseCollapsibleOutput<T> {
   const [isOpen, setOpen] = useState(Boolean(open));
   const wasOpen = useRef(Boolean(open));
-  const contentRef = useRef<HTMLElement>();
-  const triggerRef = useRef<HTMLElement>();
+  const triggerRef = useRef<T | null>(null);
+  const contentRef = useRef<T | null>(null);
 
   const [openDuration, closeDuration] =
     typeof duration === 'number' ? [duration, duration] : duration;
 
   useLayoutEffect(() => {
-    const { dataset, style } = safeRef(contentRef);
+    const { dataset, style } = safeRef<T>(contentRef);
     if (dataset.ready) {
       return toggleCollapsible(Boolean(open));
     }
@@ -42,7 +45,7 @@ export function useCollapsible({
     }
   }, [immutable || open]);
 
-  const handleTriggerClick = useCallback(
+  const handleTriggerClick: ReactEventHandler<T> = useCallback(
     (event) => {
       event.preventDefault();
       toggleCollapsible(!isOpen);
@@ -51,12 +54,12 @@ export function useCollapsible({
     [disabled, duration, easing, isOpen, onOpening, onClosing, onToggle]
   );
 
-  const handleTransitionEnd = useCallback(
+  const handleTransitionEnd: TransitionEventHandler<T> = useCallback(
     (event) => {
       if (event.target !== contentRef.current) {
         return;
       }
-      const { dataset, style } = event.target;
+      const { dataset, style } = safeRef(contentRef);
       delete dataset.inTransition;
       if (isOpen) {
         style.overflow = overflow;
@@ -87,50 +90,50 @@ export function useCollapsible({
   };
 
   function toggleCollapsible(shouldOpen: boolean) {
-    const { dataset } = safeRef(contentRef);
+    const { dataset } = safeRef<T>(contentRef);
     if (shouldOpen === isOpen || disabled || dataset.inTransition) {
       return;
     }
     if (shouldOpen) {
-      openCollapsible(contentRef, openDuration, easing);
+      openCollapsible<T>(contentRef, openDuration, easing);
       wasOpen.current = true;
       setOpen(true);
       onOpening?.();
     } else {
-      closeCollapsible(contentRef, closeDuration, easing);
+      closeCollapsible<T>(contentRef, closeDuration, easing);
       setOpen(false);
       onClosing?.();
     }
   }
 }
 
-function safeRef(ref: MutableRefObject<HTMLElement | undefined>): HTMLElement {
-  if (typeof ref.current === 'undefined') {
+function safeRef<T>(ref: RefObject<T>): T {
+  if (ref.current === null) {
     throw Error('useCollapsible: contentRef cannot be undefined');
   }
   return ref.current;
 }
 
-function openCollapsible(
-  contentRef: MutableRefObject<HTMLElement | undefined>,
+function openCollapsible<T extends HTMLElement>(
+  contentRef: RefObject<T>,
   duration: number,
   easing: string
 ) {
   window.requestAnimationFrame(() => {
     if (contentRef.current?.scrollHeight) {
-      setTransition(contentRef, duration, easing);
+      setTransition<T>(contentRef, duration, easing);
     }
   });
 }
 
-function closeCollapsible(
-  contentRef: MutableRefObject<HTMLElement | undefined>,
+function closeCollapsible<T extends HTMLElement>(
+  contentRef: RefObject<T>,
   duration: number,
   easing: string
 ) {
   if (contentRef.current?.scrollHeight) {
-    const { style } = safeRef(contentRef);
-    setTransition(contentRef, duration, easing);
+    const { style } = safeRef<T>(contentRef);
+    setTransition<T>(contentRef, duration, easing);
     window.requestAnimationFrame(() => {
       style.overflow = 'hidden';
       style.height = '0';
@@ -138,44 +141,44 @@ function closeCollapsible(
   }
 }
 
-function setTransition(
-  contentRef: MutableRefObject<HTMLElement | undefined>,
+function setTransition<T extends HTMLElement>(
+  contentRef: RefObject<T>,
   duration: number,
   easing: string
 ) {
-  const { dataset, scrollHeight, style } = safeRef(contentRef);
+  const { dataset, scrollHeight, style } = safeRef<T>(contentRef);
   style.transition = `height ${duration}ms ${easing}`;
   style.height = `${scrollHeight}px`;
   dataset.inTransition = '';
 }
 
-export interface UseCollapsibleOptions {
+export interface UseCollapsibleOptions<T> {
   open?: boolean | null;
   disabled?: boolean | null;
   duration?: number | [number, number];
   easing?: string;
   overflow?: string;
   immutable?: boolean | null;
-  onOpen?(event: Event): void;
+  onOpen?: TransitionEventHandler<T>;
+  onClose?: TransitionEventHandler<T>;
   onOpening?(): void;
-  onClose?(event: Event): void;
   onClosing?(): void;
-  onToggle?(wouldOpen: boolean, event: Event): void;
+  onToggle?(wouldOpen: boolean, event: SyntheticEvent): void;
 }
 
-export interface TriggerProps {
-  ref: MutableRefObject<HTMLElement | undefined>;
-  onClick(event: Event): void;
+export interface TriggerProps<T> {
+  ref: RefObject<T>;
+  onClick: ReactEventHandler<T>;
 }
 
-export interface ContentProps {
-  ref: MutableRefObject<HTMLElement | undefined>;
-  onTransitionEnd(event: Event): void;
+export interface ContentProps<T> {
+  ref: RefObject<T>;
+  onTransitionEnd: TransitionEventHandler<T>;
 }
 
-export interface UseCollapsibleOutput {
+export interface UseCollapsibleOutput<T> {
   isOpen: boolean;
   shouldRender: boolean;
-  getTriggerProps(): TriggerProps;
-  getContentProps(): ContentProps;
+  getTriggerProps(): TriggerProps<T>;
+  getContentProps(): ContentProps<T>;
 }

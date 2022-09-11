@@ -1,4 +1,11 @@
-import React, { ReactElement, useCallback, useMemo, useState } from 'react';
+import React, {
+  KeyboardEventHandler,
+  ReactElement,
+  ReactHTML,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import PropTypes, { InferProps, InferType } from 'prop-types';
 import { useCollapsible } from './useCollapsible';
 
@@ -38,8 +45,8 @@ export default function Collapsible({
   contentContainerTagName,
   children,
 }: InferProps<typeof Collapsible.propTypes>) {
-  const Trigger = triggerTagName;
-  const Container = contentContainerTagName;
+  const Trigger = triggerTagName as keyof ReactHTML;
+  const Container = contentContainerTagName as keyof ReactHTML;
 
   const [inTransition, setInTransition] = useState(false);
 
@@ -103,6 +110,15 @@ export default function Collapsible({
     };
   }
 
+  const handleKeyPress: KeyboardEventHandler<HTMLElement> = (event) => {
+    if (
+      (event.key === ' ' && triggerTagName?.toLowerCase() !== 'button') ||
+      event.key === 'Enter'
+    ) {
+      triggerProps.onClick(event);
+    }
+  };
+
   return (
     <Container
       className={classNames(
@@ -120,21 +136,13 @@ export default function Collapsible({
           isOpen ? triggerOpenedClassName : triggerClassName
         )}
         {...triggerProps}
-        style={triggerStyle}
-        onKeyPress={(event: KeyboardEvent) => {
-          const { key } = event;
-          if (
-            (key === ' ' && triggerTagName?.toLowerCase() !== 'button') ||
-            key === 'Enter'
-          ) {
-            triggerProps.onClick(event);
-          }
-        }}
-        tabIndex={tabIndex}
+        style={triggerStyle ?? undefined}
+        tabIndex={tabIndex ?? undefined}
         aria-expanded={isOpen}
-        aria-disabled={triggerDisabled}
+        aria-disabled={Boolean(triggerDisabled)}
         aria-controls={contentId}
         role="button" // Since our default TriggerElement is not a button
+        onKeyPress={handleKeyPress}
         {...triggerElementProps}
       >
         {isOpen && typeof triggerWhenOpen !== 'undefined'
@@ -151,7 +159,7 @@ export default function Collapsible({
           contentOuterClassName
         )}
         {...contentProps}
-        hidden={Boolean(contentHiddenWhenClosed && !isOpen && !inTransition)}
+        hidden={Boolean(contentHiddenWhenClosed) && !isOpen && !inTransition}
         role="region"
         aria-labelledby={triggerId}
       >
