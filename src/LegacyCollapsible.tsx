@@ -9,6 +9,8 @@ import React, {
 import PropTypes, { InferProps, InferType } from 'prop-types';
 import { useCollapsible } from './useCollapsible';
 
+type AllowedElements = keyof ReactHTML & keyof HTMLElementTagNameMap;
+
 export default function Collapsible({
   open,
   easing,
@@ -44,9 +46,12 @@ export default function Collapsible({
   triggerTagName,
   contentContainerTagName,
   children,
-}: InferProps<typeof Collapsible.propTypes>) {
-  const Trigger = triggerTagName as keyof ReactHTML;
-  const Container = contentContainerTagName as keyof ReactHTML;
+}: InferProps<typeof Collapsible.propTypes> & {
+  triggerTagName: AllowedElements;
+  contentContainerTagName: AllowedElements;
+}) {
+  const Trigger: any = triggerTagName; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const Container: any = contentContainerTagName; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const [inTransition, setInTransition] = useState(false);
 
@@ -61,7 +66,10 @@ export default function Collapsible({
   );
 
   const { getContentProps, getTriggerProps, shouldRender, isOpen } =
-    useCollapsible({
+    useCollapsible<
+      HTMLDivElement,
+      HTMLElementTagNameMap[typeof triggerTagName]
+    >({
       open,
       easing,
       overflow: overflowWhenOpen,
@@ -110,7 +118,9 @@ export default function Collapsible({
     };
   }
 
-  const handleKeyPress: KeyboardEventHandler<HTMLElement> = (event) => {
+  const handleKeyPress: KeyboardEventHandler<
+    HTMLElementTagNameMap[typeof triggerTagName]
+  > = (event) => {
     if (
       (event.key === ' ' && triggerTagName?.toLowerCase() !== 'button') ||
       event.key === 'Enter'

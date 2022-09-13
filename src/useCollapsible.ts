@@ -9,7 +9,10 @@ import {
   useState,
 } from 'react';
 
-export function useCollapsible<T extends HTMLElement>({
+export function useCollapsible<
+  ContentType extends HTMLElement,
+  TriggerType extends HTMLElement
+>({
   open,
   disabled,
   duration = 400,
@@ -21,17 +24,17 @@ export function useCollapsible<T extends HTMLElement>({
   onClose,
   onClosing,
   onToggle,
-}: UseCollapsibleOptions<T> = {}): UseCollapsibleOutput<T> {
+}: UseCollapsibleOptions = {}): UseCollapsibleOutput<ContentType, TriggerType> {
   const [isOpen, setOpen] = useState(Boolean(open));
   const wasOpen = useRef(Boolean(open));
-  const triggerRef = useRef<T | null>(null);
-  const contentRef = useRef<T | null>(null);
+  const triggerRef = useRef<TriggerType | null>(null);
+  const contentRef = useRef<ContentType | null>(null);
 
   const [openDuration, closeDuration] =
     typeof duration === 'number' ? [duration, duration] : duration;
 
   useLayoutEffect(() => {
-    const { dataset, style } = safeRef<T>(contentRef);
+    const { dataset, style } = safeRef(contentRef);
     if (dataset.ready) {
       return toggleCollapsible(Boolean(open));
     }
@@ -45,7 +48,7 @@ export function useCollapsible<T extends HTMLElement>({
     }
   }, [immutable || open]);
 
-  const handleTriggerClick: ReactEventHandler<T> = useCallback(
+  const handleTriggerClick: ReactEventHandler<HTMLElement> = useCallback(
     (event) => {
       event.preventDefault();
       toggleCollapsible(!isOpen);
@@ -54,7 +57,7 @@ export function useCollapsible<T extends HTMLElement>({
     [disabled, duration, easing, isOpen, onOpening, onClosing, onToggle]
   );
 
-  const handleTransitionEnd: TransitionEventHandler<T> = useCallback(
+  const handleTransitionEnd: TransitionEventHandler<HTMLElement> = useCallback(
     (event) => {
       if (event.target !== contentRef.current) {
         return;
@@ -90,50 +93,50 @@ export function useCollapsible<T extends HTMLElement>({
   };
 
   function toggleCollapsible(shouldOpen: boolean) {
-    const { dataset } = safeRef<T>(contentRef);
+    const { dataset } = safeRef(contentRef);
     if (shouldOpen === isOpen || disabled || dataset.inTransition) {
       return;
     }
     if (shouldOpen) {
-      openCollapsible<T>(contentRef, openDuration, easing);
+      openCollapsible(contentRef, openDuration, easing);
       wasOpen.current = true;
       setOpen(true);
       onOpening?.();
     } else {
-      closeCollapsible<T>(contentRef, closeDuration, easing);
+      closeCollapsible(contentRef, closeDuration, easing);
       setOpen(false);
       onClosing?.();
     }
   }
 }
 
-function safeRef<T>(ref: RefObject<T>): T {
+function safeRef(ref: RefObject<HTMLElement>): HTMLElement {
   if (ref.current === null) {
     throw Error('useCollapsible: contentRef cannot be undefined');
   }
   return ref.current;
 }
 
-function openCollapsible<T extends HTMLElement>(
-  contentRef: RefObject<T>,
+function openCollapsible(
+  contentRef: RefObject<HTMLElement>,
   duration: number,
   easing: string
 ) {
   window.requestAnimationFrame(() => {
     if (contentRef.current?.scrollHeight) {
-      setTransition<T>(contentRef, duration, easing);
+      setTransition(contentRef, duration, easing);
     }
   });
 }
 
-function closeCollapsible<T extends HTMLElement>(
-  contentRef: RefObject<T>,
+function closeCollapsible(
+  contentRef: RefObject<HTMLElement>,
   duration: number,
   easing: string
 ) {
   if (contentRef.current?.scrollHeight) {
-    const { style } = safeRef<T>(contentRef);
-    setTransition<T>(contentRef, duration, easing);
+    const { style } = safeRef(contentRef);
+    setTransition(contentRef, duration, easing);
     window.requestAnimationFrame(() => {
       style.overflow = 'hidden';
       style.height = '0';
@@ -141,44 +144,47 @@ function closeCollapsible<T extends HTMLElement>(
   }
 }
 
-function setTransition<T extends HTMLElement>(
-  contentRef: RefObject<T>,
+function setTransition(
+  contentRef: RefObject<HTMLElement>,
   duration: number,
   easing: string
 ) {
-  const { dataset, scrollHeight, style } = safeRef<T>(contentRef);
+  const { dataset, scrollHeight, style } = safeRef(contentRef);
   style.transition = `height ${duration}ms ${easing}`;
   style.height = `${scrollHeight}px`;
   dataset.inTransition = '';
 }
 
-export interface UseCollapsibleOptions<T> {
+export interface UseCollapsibleOptions {
   open?: boolean | null;
   disabled?: boolean | null;
   duration?: number | [number, number];
   easing?: string;
   overflow?: string;
   immutable?: boolean | null;
-  onOpen?: TransitionEventHandler<T>;
-  onClose?: TransitionEventHandler<T>;
+  onOpen?: TransitionEventHandler<HTMLElement>;
+  onClose?: TransitionEventHandler<HTMLElement>;
   onOpening?(): void;
   onClosing?(): void;
   onToggle?(wouldOpen: boolean, event: SyntheticEvent): void;
 }
 
-export interface TriggerProps<T> {
+export interface TriggerProps<T extends HTMLElement> {
   ref: RefObject<T>;
   onClick: ReactEventHandler<T>;
 }
 
-export interface ContentProps<T> {
+export interface ContentProps<T extends HTMLElement> {
   ref: RefObject<T>;
   onTransitionEnd: TransitionEventHandler<T>;
 }
 
-export interface UseCollapsibleOutput<T> {
+export interface UseCollapsibleOutput<
+  ContentType extends HTMLElement,
+  TriggerType extends HTMLElement
+> {
   isOpen: boolean;
   shouldRender: boolean;
-  getTriggerProps(): TriggerProps<T>;
-  getContentProps(): ContentProps<T>;
+  getTriggerProps(): TriggerProps<TriggerType>;
+  getContentProps(): ContentProps<ContentType>;
 }
