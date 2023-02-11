@@ -18,7 +18,7 @@ export function useCollapsible<
   duration = 400,
   easing = 'cubic-bezier(0.45, 0, 0.55, 1)', // ease-in-out-quad
   overflow = 'hidden',
-  immutable,
+  controlled,
   onOpen,
   onOpening,
   onClose,
@@ -46,7 +46,7 @@ export function useCollapsible<
       style.overflow = 'hidden';
       style.height = '0';
     }
-  }, [immutable || open]);
+  }, [controlled || open]);
 
   const handleTriggerClick: ReactEventHandler<HTMLElement> = useCallback(
     (event) => {
@@ -161,7 +161,7 @@ export interface UseCollapsibleOptions {
   duration?: number | [number, number];
   easing?: string;
   overflow?: string;
-  immutable?: boolean | null;
+  controlled?: boolean | null;
   onOpen?: TransitionEventHandler<HTMLElement>;
   onClose?: TransitionEventHandler<HTMLElement>;
   onOpening?(): void;
